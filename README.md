@@ -1,83 +1,83 @@
 # Contrastive Embedding Trainer
 
-Pipeline personalizado en PyTorch para entrenar embeddings de texto utilizando una arquitectura de red siamesa y Triplet Cosine Loss. Este proyecto permite realizar el ajuste fino (fine-tuning) de codificadores basados en Transformer para tareas de busqueda semantica, agrupamiento (clustering) y sistemas de recuperacion de informacion (RAG).
+Custom PyTorch pipeline for training text embeddings using a siamese network architecture and Triplet Cosine Loss. This project enables fine-tuning of Transformer-based encoders for semantic search, clustering, and retrieval-augmented generation (RAG) tasks.
 
-## Arquitectura y Fundamentos Teoricos
+## Architecture and Theoretical Foundations
 
-El sistema emplea un unico codificador Transformer base (por defecto `distilbert-base-uncased`) cuyos pesos se comparten en una estructura siamesa. Durante el entrenamiento, procesamos en paralelo tres textos (el triplete):
-*   **Anchor (Ancla):** El texto de referencia.
-*   **Positive (Positivo):** Un texto semanticamente similar o relacionado al Anchor.
-*   **Negative (Negativo):** Un texto semanticamente disimil o no relacionado al Anchor.
+The system uses a single base Transformer encoder (default `distilbert-base-uncased`) whose weights are shared in a siamese structure. During training, we process three texts in parallel (the triplet):
+*   **Anchor:** The reference text.
+*   **Positive:** A text that is semantically similar or related to the Anchor.
+*   **Negative:** A text that is semantically dissimilar or unrelated to the Anchor.
 
-Cada texto genera su representacion densa a traves del mismo codificador.
+Each text generates its dense representation through the same encoder.
 
-### 1. Mean Pooling sobre Estados Ocultos
-En lugar de depender unicamente del token especial `[CLS]` (que a menudo sufre de cuellos de botella informacionales en tareas de similitud de oraciones), este pipeline realiza un promedio aritmetico (Mean Pooling) de los estados ocultos de la ultima capa del Transformer para todos los tokens de la oracion, ponderado y filtrado mediante la mascara de atencion (`attention_mask`) para ignorar los tokens de padding.
+### 1. Mean Pooling over Hidden States
+Instead of relying solely on the special `[CLS]` token (which often suffers from information bottlenecks in sentence-similarity tasks), this pipeline performs an arithmetic average (Mean Pooling) of the Transformer's last-layer hidden states across all tokens in the sentence, weighted and filtered using the attention mask (`attention_mask`) to ignore padding tokens.
 
-Matematicamente, para una secuencia de embeddings de tokens $H = \{h_1, h_2, ..., h_n\}$ y una mascara de atencion binaria $M = \{m_1, m_2, ..., m_n\}$:
+Mathematically, for a sequence of token embeddings $H = \{h_1, h_2, ..., h_n\}$ and a binary attention mask $M = \{m_1, m_2, ..., m_n\}$:
 
 $$\text{Embedding} = \frac{\sum_{i=1}^{n} h_i \cdot m_i}{\sum_{i=1}^{n} m_i}$$
 
-Finalmente, se aplica una normalizacion $L_2$ al vector resultante para simplificar la similitud de coseno a un producto punto:
+Finally, $L_2$ normalization is applied to the resulting vector to simplify cosine similarity to a dot product:
 
 $$E_{\text{norm}} = \frac{\text{Embedding}}{\|\text{Embedding}\|_2}$$
 
 ### 2. Triplet Cosine Loss
-La funcion de perdida optimiza el espacio vectorial forzando a que la distancia de coseno entre el Anchor ($A$) y el Positive ($P$) sea menor que la distancia entre el Anchor y el Negative ($N$) por un margen establecido.
+The loss function optimizes the vector space by forcing the cosine distance between the Anchor ($A$) and the Positive ($P$) to be smaller than the distance between the Anchor and the Negative ($N$) by an established margin.
 
-La distancia de coseno se define a partir de la similitud de coseno:
+Cosine distance is defined from cosine similarity:
 
 $$D_{\cos}(x, y) = 1.0 - \frac{x \cdot y}{\|x\|_2 \|y\|_2}$$
 
-La formula de la perdida para un triplete es:
+The loss formula for a triplet is:
 
 $$\mathcal{L} = \max(D_{\cos}(A, P) - D_{\cos}(A, N) + m, 0)$$
 
-donde $m$ es el margen de penalizacion (por defecto `0.3`). La optimizacion busca minimizar $\mathcal{L}$ reduciendo $D_{\cos}(A, P)$ e incrementando $D_{\cos}(A, N)$.
+where $m$ is the penalty margin (default `0.3`). Optimization seeks to minimize $\mathcal{L}$ by reducing $D_{\cos}(A, P)$ and increasing $D_{\cos}(A, N)$.
 
-### 3. Optimizacion AdamW con Regularizacion
-El entrenamiento se realiza utilizando el optimizador AdamW que desacopla la penalizacion de pesos (weight decay) de las actualizaciones de gradiente de primer y segundo momento:
+### 3. AdamW Optimization with Regularization
+Training is performed using the AdamW optimizer, which decouples weight decay from the first- and second-moment gradient updates:
 
 $$\theta_{t+1} = \theta_t - \eta_t (\hat{g}_t + \lambda \theta_t)$$
 
-Donde $\eta_t$ es la tasa de aprendizaje, $\lambda$ es el coeficiente de weight decay, y $\hat{g}_t$ es el gradiente corregido por el sesgo.
+Where $\eta_t$ is the learning rate, $\lambda$ is the weight decay coefficient, and $\hat{g}_t$ is the bias-corrected gradient.
 
-## Estructura del Directorio de Exportacion (`model_output/`)
+## Export Directory Structure (`model_output/`)
 
-Tras completar el ajuste fino, el modelo se exporta en un formato compatible con Hugging Face Transformers:
-*   `pytorch_model.bin` o `model.safetensors`: Los pesos del codificador ajustado.
-*   `config.json`: Metadatos estructurales del modelo base.
-*   `vocab.txt` o `tokenizer.json`: El vocabulario original.
-*   `tokenizer_config.json`: Configuracion del tokenizador WordPiece.
+After fine-tuning completes, the model is exported in a format compatible with Hugging Face Transformers:
+*   `pytorch_model.bin` or `model.safetensors`: The fine-tuned encoder's weights.
+*   `config.json`: Structural metadata of the base model.
+*   `vocab.txt` or `tokenizer.json`: The original vocabulary.
+*   `tokenizer_config.json`: WordPiece tokenizer configuration.
 
-## Requisitos de Instalacion
+## Installation Requirements
 
-*   Python 3.10 o superior
+*   Python 3.10 or higher
 *   PyTorch
 *   Transformers (Hugging Face)
 *   Numpy
 
-Para instalar las dependencias especificadas, ejecute:
+To install the specified dependencies, run:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Guia de Ejecucion y Verificacion
+## Execution and Verification Guide
 
-### 1. Ejecutar Pruebas Unitarias
-Verifica la inicialización de pesos aleatorios, las dimensiones de la capa de pooling y la deducción de gradientes:
+### 1. Run Unit Tests
+Verifies random weight initialization, pooling layer dimensions, and gradient flow:
 ```bash
 python3 -m unittest test_trainer.py
 ```
 
-### 2. Ejecutar Ajuste Fino Demostrativo
+### 2. Run the Demo Fine-Tuning
 ```bash
 python3 example.py
 ```
-El script descargara el modelo base, ejecutara 4 epocas de ajuste fino y comparara la similitud de coseno resultante antes y despues del entrenamiento para tripletes especificos (cocina, astronomia y programacion).
+The script will download the base model, run 4 fine-tuning epochs, and compare the resulting cosine similarity before and after training for specific triplets (cooking, astronomy, and programming).
 
-## Conectividad en el Ecosistema ai-core-infra
+## Connectivity within the ai-core-infra Ecosystem
 
-*   **semantic-chunking-engine:** Los fragmentos semanticos generados se pueden vectorizar utilizando el modelo siames entrenado aqui.
-*   **nano-vector-db:** Los embeddings de salida se indexan directamente en el indice HNSW para busquedas de vecinos mas cercanos (K-NN).
-*   **hybrid-search-retrieval-pipeline:** Provee los embeddings de alta fidelidad requeridos para la rama densa.
+*   **semantic-chunking-engine:** The generated semantic chunks can be vectorized using the siamese model trained here.
+*   **nano-vector-db:** The output embeddings are indexed directly into the HNSW index for K-nearest-neighbor (K-NN) searches.
+*   **hybrid-search-retrieval-pipeline:** Provides the high-fidelity embeddings required for the dense branch.
