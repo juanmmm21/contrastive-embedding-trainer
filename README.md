@@ -50,6 +50,24 @@ After fine-tuning completes, the model is exported in a format compatible with H
 *   `vocab.txt` or `tokenizer.json`: The original vocabulary.
 *   `tokenizer_config.json`: WordPiece tokenizer configuration.
 
+## Using it as a package
+
+Since `0.1.0` the code lives in the `contrastive_embedding_trainer` package and the repository is
+pip-installable, so other projects can depend on it instead of copying files
+or editing `sys.path`:
+
+```bash
+pip install "contrastive-embedding-trainer @ git+https://github.com/juanmmm21/contrastive-embedding-trainer.git@v0.1.0"
+```
+
+```python
+from contrastive_embedding_trainer import EmbeddingTrainer, SiameseTransformer
+```
+
+The old top-level modules are kept as thin re-exports, so sibling
+`ai-core-infra` repos that add this folder to `sys.path` keep working
+unchanged.
+
 ## Installation Requirements
 
 *   Python 3.10 or higher
