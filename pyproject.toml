@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "contrastive-embedding-trainer"
+version = "0.1.0"
+description = "Contrastive (triplet) fine-tuning of transformer sentence embeddings."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Juan Martos Cuevas", email = "martoscuevasjuan@gmail.com" }]
+dependencies = [
+    "torch>=2.0",
+    "transformers>=4.28",
+    "scikit-learn",
+    "tqdm",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["contrastive_embedding_trainer"]

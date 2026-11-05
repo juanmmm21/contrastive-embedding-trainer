@@ -7,9 +7,9 @@ from typing import Dict
 
 from transformers import AutoTokenizer, DistilBertConfig, DistilBertModel
 
-from model import SiameseTransformer, TripletCosineLoss
-from dataset import TripletDataset
-from trainer import EmbeddingTrainer
+from contrastive_embedding_trainer.model import SiameseTransformer, TripletCosineLoss
+from contrastive_embedding_trainer.dataset import TripletDataset
+from contrastive_embedding_trainer.trainer import EmbeddingTrainer
 
 
 class TestContrastiveEmbeddingTrainer(unittest.TestCase):

@@ -2,9 +2,9 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 
-from model import SiameseTransformer
-from dataset import TripletDataset
-from trainer import EmbeddingTrainer
+from contrastive_embedding_trainer.model import SiameseTransformer
+from contrastive_embedding_trainer.dataset import TripletDataset
+from contrastive_embedding_trainer.trainer import EmbeddingTrainer
 
 
 def get_embedding(model: SiameseTransformer, tokenizer, text: str, device) -> torch.Tensor:
